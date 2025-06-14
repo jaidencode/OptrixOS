@@ -9,6 +9,7 @@ void hardware_init(void);
 
 // Keyboard
 bool keyboard_available(void);
+void keyboard_enable(void);
 uint8_t keyboard_read_scan(void);
 
 // Mouse

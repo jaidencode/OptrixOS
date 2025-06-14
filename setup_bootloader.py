@@ -4,14 +4,23 @@ import os
 import shutil
 
 # --- CONFIGURATION ---
-TOOLCHAIN_DIR = r"C:\Users\jaide\Downloads\i686-elf-tools-windows\bin"
-CC = os.path.join(TOOLCHAIN_DIR, "i686-elf-gcc.exe")
-LD = os.path.join(TOOLCHAIN_DIR, "i686-elf-ld.exe")
-OBJDUMP = os.path.join(TOOLCHAIN_DIR, "i686-elf-objdump.exe")
+TOOLCHAIN_DIR = os.environ.get("TOOLCHAIN_DIR") or r"C:\\Users\\jaide\\Downloads\\i686-elf-tools-windows\\bin"
+CC = os.environ.get("CC") or os.path.join(TOOLCHAIN_DIR, "i686-elf-gcc.exe")
+LD = os.environ.get("LD") or os.path.join(TOOLCHAIN_DIR, "i686-elf-ld.exe")
+OBJDUMP = os.environ.get("OBJDUMP") or os.path.join(TOOLCHAIN_DIR, "i686-elf-objdump.exe")
+
+if not os.path.isfile(CC):
+    CC = shutil.which("i686-linux-gnu-gcc") or "i686-linux-gnu-gcc"
+if not os.path.isfile(LD):
+    LD = shutil.which("i686-linux-gnu-ld") or "i686-linux-gnu-ld"
+if not os.path.isfile(OBJDUMP):
+    OBJDUMP = shutil.which("i686-linux-gnu-objdump") or "i686-linux-gnu-objdump"
 NASM = "nasm"
 
-CDRTOOLS_DIR = r"C:\Program Files (x86)\cdrtools"
-MKISOFS_EXE = os.path.join(CDRTOOLS_DIR, "mkisofs.exe")
+CDRTOOLS_DIR = os.environ.get("CDRTOOLS_DIR") or r"C:\\Program Files (x86)\\cdrtools"
+MKISOFS_EXE = os.environ.get("MKISOFS") or os.path.join(CDRTOOLS_DIR, "mkisofs.exe")
+if not os.path.isfile(MKISOFS_EXE):
+    MKISOFS_EXE = shutil.which("mkisofs") or "mkisofs"
 
 asm_files = [
     "bootloader.asm",    # boot sector (must remain first, used for bin)
@@ -137,7 +146,7 @@ def build_kernel(asm_files, c_files, out_bin):
         c_obj = f"{base}.o"
         if c_obj not in seen_objs:
             print(f"Compiling C source: {c} -> {c_obj}")
-            run([CC, "-ffreestanding", "-m32", "-c", c, "-o", c_obj])
+            run([CC, "-ffreestanding", "-fno-pie", "-fno-pic", "-m32", "-c", c, "-o", c_obj])
             obj_files.append(c_obj)
             tmp_files.append(c_obj)
             seen_objs.add(c_obj)
@@ -146,7 +155,7 @@ def build_kernel(asm_files, c_files, out_bin):
     kernel_bin = "kernel.bin"
     elf_out = kernel_bin.replace(".bin", ".elf")
     print(f"Linking kernel ELF: {elf_out}")
-    link_cmd_elf = [LD, "-Ttext", "0x1000", "-m", "elf_i386", "-e", "start"] + obj_files + ["-o", elf_out]
+    link_cmd_elf = [LD, "-Ttext", "0x1000", "-m", "elf_i386", "-e", "start", "-nostdlib"] + obj_files + ["-o", elf_out]
     run(link_cmd_elf)
     tmp_files.append(elf_out)
 
@@ -159,7 +168,7 @@ def build_kernel(asm_files, c_files, out_bin):
 
     # Convert ELF to raw BIN for booting (add -e start)
     print(f"Converting ELF -> BIN: {elf_out} -> {kernel_bin}")
-    link_cmd_bin = [LD, "-Ttext", "0x1000", "-m", "elf_i386", "-e", "start", "--oformat", "binary"] + obj_files + ["-o", kernel_bin]
+    link_cmd_bin = [LD, "-Ttext", "0x1000", "-m", "elf_i386", "-e", "start", "--oformat", "binary", "-nostdlib", "-no-pie"] + obj_files + ["-o", kernel_bin]
     run(link_cmd_bin)
     tmp_files.append(kernel_bin)
 
