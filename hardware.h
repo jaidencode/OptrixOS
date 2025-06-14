@@ -4,17 +4,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// Initialize keyboard/mouse. IDT should be ready before calling.
+// Initialize PS/2 controller and detect devices. IDT should be ready before
+// calling.  This sets the availability flags for the keyboard and mouse and
+// enables the devices if they are present.
 void hardware_init(void);
 
-// Keyboard
+// Query device availability after hardware_init()
 bool keyboard_available(void);
-void keyboard_enable(void);
-uint8_t keyboard_read_scan(void);
-
-// Mouse
 bool mouse_available(void);
-void mouse_enable(void);
-bool mouse_read_packet(uint8_t packet[3]); // Returns true if a packet was read
 
 #endif
