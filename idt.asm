@@ -2,7 +2,22 @@
 BITS 32
 
 global idt_load
-global isr0
+%macro ISR_NOERR 1
+global isr%1
+isr%1:
+    push dword 0          ; error code
+    push dword %1         ; interrupt number
+    call isr_handler
+    add esp, 8
+    iret
+%endmacro
+
+; Declare all ISR stubs 0-31
+%assign i 0
+%rep 32
+    ISR_NOERR i
+%assign i i+1
+%endrep
 
 extern isr_handler
 
@@ -14,10 +29,3 @@ idt_load:
     lidt [eax]
     ret
 
-; ISR0: Divide by zero handler
-isr0:
-    push 0         ; dummy error code
-    push 0         ; interrupt number 0
-    call isr_handler
-    add esp, 8
-    iret
