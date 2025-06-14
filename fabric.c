@@ -52,15 +52,10 @@ static const char scancode_ascii[128] = {
 
 // Draw a simple bordered window filling most of the screen
 static void draw_window(uint8_t color) {
-    graphics_draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color);
+    graphics_draw_rect(0, 0, screen_width, screen_height, color);
 }
 
-static const int term_x = 30;
-static const int term_y = 40;
-static const int term_w = SCREEN_WIDTH - 60;
-static const int term_h = SCREEN_HEIGHT - 80;
-
-static void draw_terminal_window(void) {
+static void draw_terminal_window(int term_x, int term_y, int term_w, int term_h) {
     graphics_draw_rect(term_x, term_y, term_w, term_h, 1);
     for (int i = 0; i < term_w; ++i) {
         graphics_put_pixel(term_x + i, term_y, 15);
@@ -78,11 +73,17 @@ static void draw_terminal_window(void) {
 }
 
 void fabric_ui(uint8_t color) {
-    graphics_clear(0);
+    graphics_clear(color);
     draw_window(color);
-    draw_terminal_window();
-    int mouse_x = SCREEN_WIDTH / 2;
-    int mouse_y = SCREEN_HEIGHT / 2;
+
+    int term_x = 30;
+    int term_y = 40;
+    int term_w = screen_width - 60;
+    int term_h = screen_height - 80;
+    draw_terminal_window(term_x, term_y, term_w, term_h);
+
+    int mouse_x = screen_width / 2;
+    int mouse_y = screen_height / 2;
     save_cursor_back(mouse_x, mouse_y);
     draw_cursor(mouse_x, mouse_y, 15);
     int cur_col = 0;
@@ -100,8 +101,8 @@ void fabric_ui(uint8_t color) {
             mouse_y -= dy;
             if (mouse_x < 0) mouse_x = 0;
             if (mouse_y < 0) mouse_y = 0;
-            if (mouse_x >= SCREEN_WIDTH) mouse_x = SCREEN_WIDTH - 8;
-            if (mouse_y >= SCREEN_HEIGHT) mouse_y = SCREEN_HEIGHT - 8;
+            if (mouse_x >= screen_width) mouse_x = screen_width - 8;
+            if (mouse_y >= screen_height) mouse_y = screen_height - 8;
             save_cursor_back(mouse_x, mouse_y);
             draw_cursor(mouse_x, mouse_y, 15);
         }
