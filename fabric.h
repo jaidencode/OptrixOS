@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 // Simple graphical UI that displays a window with mouse and keyboard support
-void fabric_ui(uint8_t color);
+void fabric_ui(uint32_t color);
 
 #endif

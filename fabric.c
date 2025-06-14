@@ -10,7 +10,7 @@ static const unsigned char cursor_bitmap[8] = {
     0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFE
 };
 
-static uint8_t cursor_back[8][8];
+static uint32_t cursor_back[8][8];
 
 static void save_cursor_back(int x, int y) {
     for (int row = 0; row < 8; ++row) {
@@ -28,7 +28,7 @@ static void restore_cursor_back(int x, int y) {
     }
 }
 
-static void draw_cursor(int x, int y, uint8_t color) {
+static void draw_cursor(int x, int y, uint32_t color) {
     for (int row = 0; row < 8; ++row) {
         unsigned char bits = cursor_bitmap[row];
         for (int col = 0; col < 8; ++col) {
@@ -51,7 +51,7 @@ static const char scancode_ascii[128] = {
 };
 
 // Draw a simple bordered window filling most of the screen
-static void draw_window(uint8_t color) {
+static void draw_window(uint32_t color) {
     graphics_draw_rect(0, 0, screen_width, screen_height, color);
 }
 
@@ -72,7 +72,7 @@ static void draw_terminal_window(int term_x, int term_y, int term_w, int term_h)
     graphics_draw_rect(term_x + 20, term_y + 3, 4, 4, 10);
 }
 
-void fabric_ui(uint8_t color) {
+void fabric_ui(uint32_t color) {
     graphics_clear(color);
     draw_window(color);
 

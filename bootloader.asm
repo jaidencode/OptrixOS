@@ -23,9 +23,25 @@ start:
     ; Get conventional memory size (KB) via BIOS
     int 0x12
     mov [BOOTINFO_ADDR], ax
-    ; Store default screen resolution (will be patched by kernel if needed)
-    mov dword [BOOTINFO_ADDR + 4], 1920
-    mov dword [BOOTINFO_ADDR + 8], 1080
+
+    ; Query VBE mode information for actual resolution and framebuffer
+    mov ax, MODE_INFO_SEG
+    mov es, ax
+    mov di, MODE_INFO_OFF
+    mov ax, 0x4F01
+    mov cx, 0x11C
+    int 0x10
+
+    mov ax, [es:di + 18h]   ; XResolution
+    mov [BOOTINFO_ADDR + 4], ax
+    mov word [BOOTINFO_ADDR + 6], 0
+    mov ax, [es:di + 1Ah]   ; YResolution
+    mov [BOOTINFO_ADDR + 8], ax
+    mov word [BOOTINFO_ADDR + 10], 0
+    mov ax, [es:di + 28h]   ; PhysBasePtr low
+    mov [BOOTINFO_ADDR + 12], ax
+    mov ax, [es:di + 2Ah]   ; PhysBasePtr high
+    mov [BOOTINFO_ADDR + 14], ax
 
     ; Load 8 sectors of kernel from LBA 1 (MBR=sector 0, kernel=sector 1+)
     mov ah, 0x02
@@ -74,6 +90,9 @@ err    db 'DISK ERR!',0
 
 BOOT_DRIVE: db 0
 BOOTINFO_ADDR equ 0x9000
+MODE_INFO equ 0x9200
+MODE_INFO_SEG equ MODE_INFO >> 4
+MODE_INFO_OFF equ MODE_INFO & 0xF
 
 
 ; --- GDT ---
