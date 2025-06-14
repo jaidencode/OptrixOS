@@ -33,8 +33,11 @@ bool keyboard_available(void) { return has_keyboard; }
 
 void keyboard_enable(void) {
     ps2_wait_input();
+    e3wlqv-codex/fix-mouse-and-keyboard-functionality
     outb(PS2_CMD, 0xAE); // enable first PS/2 port
     ps2_wait_input();
+=======
+    main
     outb(PS2_DATA, 0xF4); // enable scanning
     ps2_wait_output();
     uint8_t ack = inb(PS2_DATA);
