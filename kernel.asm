@@ -19,3 +19,4 @@ start:
 section .bss
 align 16
 resb 4096        ; 4K scratch space for C (optional)
+kernel_end:
