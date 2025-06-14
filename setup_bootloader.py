@@ -31,6 +31,7 @@ asm_files = [
 c_files = [
     "kernel_main.c",
     "vga.c",
+    "graphics.c",
     "pmm.c",
     "idt.c",
     "hardware.c",

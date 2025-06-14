@@ -28,6 +28,29 @@ static void ps2_wait_output(void) {
     }
 }
 
+// --- ring buffer for mouse packets ---
+#define MOUSE_BUF_SIZE 16
+static uint8_t mouse_buf[MOUSE_BUF_SIZE][3];
+static int mouse_head = 0, mouse_tail = 0;
+static uint8_t mouse_bytes[3];
+static int mouse_phase = 0;
+
+static void mouse_buf_put(const uint8_t pkt[3]) {
+    for (int i = 0; i < 3; ++i)
+        mouse_buf[mouse_head][i] = pkt[i];
+    mouse_head = (mouse_head + 1) % MOUSE_BUF_SIZE;
+    if (mouse_head == mouse_tail)
+        mouse_tail = (mouse_tail + 1) % MOUSE_BUF_SIZE; // overwrite oldest
+}
+
+void mouse_handle_byte(uint8_t data) {
+    mouse_bytes[mouse_phase++] = data;
+    if (mouse_phase == 3) {
+        mouse_buf_put(mouse_bytes);
+        mouse_phase = 0;
+    }
+}
+
 void mouse_enable(void) {
     ps2_wait_input();
     outb(PS2_CMD, 0xA8);
@@ -59,18 +82,11 @@ void mouse_init(void) {
 }
 
 bool mouse_read_packet(uint8_t packet[3]) {
-    static int phase = 0;
-    static uint8_t bytes[3];
-    if (!(inb(PS2_STATUS) & 0x01))
+    if (mouse_head == mouse_tail)
         return false;
-    uint8_t data = inb(PS2_DATA);
-    bytes[phase++] = data;
-    if (phase == 3) {
-        for (int i = 0; i < 3; ++i)
-            packet[i] = bytes[i];
-        phase = 0;
-        return true;
-    }
-    return false;
+    for (int i = 0; i < 3; ++i)
+        packet[i] = mouse_buf[mouse_tail][i];
+    mouse_tail = (mouse_tail + 1) % MOUSE_BUF_SIZE;
+    return true;
 }
 

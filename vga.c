@@ -123,6 +123,14 @@ void vga_set_default_color(uint8_t color) {
     default_color = color;
 }
 
+void vga_center_puts(int row, const char* str, uint8_t color) {
+    int len = 0;
+    while (str[len]) ++len;
+    int col = (VGA_WIDTH - len) / 2;
+    vga_move_cursor(row, col);
+    vga_puts(str, color);
+}
+
 // --- DIRECT CELL ACCESS ---
 uint16_t vga_get_cell(int row, int col) {
     return vga_buffer[row * VGA_WIDTH + col];

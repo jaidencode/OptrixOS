@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// Simple text mode UI that displays a window with mouse and keyboard support
+// Simple graphical UI that displays a window with mouse and keyboard support
 void fabric_ui(uint8_t color);
 
 #endif
