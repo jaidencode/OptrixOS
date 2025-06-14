@@ -1,20 +1,7 @@
 #include <stdint.h>
 #include "hardware.h"
 #include "fabric.h"
-
-// VGA dimensions
-#define VGA_WIDTH 80
-#define VGA_HEIGHT 25
-
-// --- vga.c prototypes ---
-void vga_clear(uint8_t color);
-void vga_puts(const char* str, uint8_t color);
-void vga_set_default_color(uint8_t color);
-void vga_move_cursor(int row, int col);
-uint16_t vga_get_cell(int row, int col);
-void vga_set_cell(int row, int col, uint16_t val);
-void vga_enable_cursor(void);
-
+#include "vga.h"
 // --- pmm.c prototypes ---
 void init_pmm(uint32_t kernel_end_addr);
 uint32_t alloc_frame(void);

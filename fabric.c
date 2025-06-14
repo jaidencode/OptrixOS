@@ -1,12 +1,7 @@
 #include <stdint.h>
 #include "hardware.h"
 #include "fabric.h"
-
-void vga_clear(uint8_t color);
-void vga_puts(const char* str, uint8_t color);
-void vga_move_cursor(int row, int col);
-uint16_t vga_get_cell(int row, int col);
-void vga_set_cell(int row, int col, uint16_t val);
+#include "vga.h"
 
 static const char scancode_ascii[128] = {
     0, 27,'1','2','3','4','5','6','7','8','9','0','-','=','\b',
