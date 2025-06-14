@@ -8,6 +8,9 @@ start:
     mov ds, ax
     mov es, ax
 
+    ; Save BIOS boot drive number
+    mov [BOOT_DRIVE], dl
+
     ; Clear screen
     mov ah, 0x0
     mov al, 0x3
@@ -16,6 +19,10 @@ start:
     ; Print banner
     mov si, banner
     call print_str
+
+    ; Get conventional memory size (KB) via BIOS
+    int 0x12
+    mov [BOOTINFO_ADDR], ax
 
     ; Load 8 sectors of kernel from LBA 1 (MBR=sector 0, kernel=sector 1+)
     mov ah, 0x02
@@ -63,9 +70,8 @@ banner db 'OptrixOS Bootloader',13,10,0
 err    db 'DISK ERR!',0
 
 BOOT_DRIVE: db 0
+BOOTINFO_ADDR equ 0x9000
 
-; Save BIOS boot drive number
-mov [BOOT_DRIVE], dl
 
 ; --- GDT ---
 gdt_start:
@@ -89,7 +95,8 @@ pm_entry:
     mov ss, ax
     mov esp, 0x90000      ; stack top (safe for early boot)
 
-    ; Call kernel at 0x1000
+    ; Pass BootInfo pointer in stack and call kernel at 0x1000
+    push dword BOOTINFO_ADDR
     call dword 0x1000
 
     ; If kernel returns, halt
