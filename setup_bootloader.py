@@ -33,7 +33,8 @@ c_files = [
     "vga.c",
     "pmm.c",
     "idt.c",
-    "hardware.c"
+    "hardware.c",
+    "fabric.c"
 ]
 
 tmp_files = []
