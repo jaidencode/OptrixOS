@@ -28,6 +28,23 @@ static void ps2_wait_output(void) {
     }
 }
 
+// --- ring buffer for scancodes ---
+#define KBD_BUF_SIZE 32
+static uint8_t kbd_buf[KBD_BUF_SIZE];
+static int kbd_head = 0, kbd_tail = 0;
+
+static void kbd_buf_put(uint8_t sc) {
+    int next = (kbd_head + 1) % KBD_BUF_SIZE;
+    if (next != kbd_tail) {
+        kbd_buf[kbd_head] = sc;
+        kbd_head = next;
+    }
+}
+
+void keyboard_handle_byte(uint8_t data) {
+    kbd_buf_put(data);
+}
+
 void keyboard_enable(void) {
     ps2_wait_input();
     outb(PS2_CMD, 0xAE); // enable first PS/2 port
@@ -42,9 +59,10 @@ void keyboard_init(void) {
 }
 
 uint8_t keyboard_read_scan(void) {
-    if (inb(PS2_STATUS) & 0x01) {
-        return inb(PS2_DATA);
-    }
-    return 0;
+    if (kbd_head == kbd_tail)
+        return 0;
+    uint8_t sc = kbd_buf[kbd_tail];
+    kbd_tail = (kbd_tail + 1) % KBD_BUF_SIZE;
+    return sc;
 }
 

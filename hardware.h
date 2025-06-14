@@ -13,4 +13,7 @@ void hardware_init(void);
 bool keyboard_available(void);
 bool mouse_available(void);
 
+// Read all pending bytes from the PS/2 controller and route them
+void ps2_flush_buffers(void);
+
 #endif

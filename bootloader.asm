@@ -11,9 +11,8 @@ start:
     ; Save BIOS boot drive number
     mov [BOOT_DRIVE], dl
 
-    ; Clear screen
-    mov ah, 0x0
-    mov al, 0x3
+    ; Set graphics mode 320x200x256
+    mov ax, 0x0013
     int 0x10
 
     ; Print banner

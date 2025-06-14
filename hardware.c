@@ -2,6 +2,10 @@
 #include "keyboard.h"
 #include "mouse.h"
 
+// internal handlers from keyboard.c and mouse.c
+extern void keyboard_handle_byte(uint8_t data);
+extern void mouse_handle_byte(uint8_t data);
+
 #define PS2_DATA 0x60
 #define PS2_STATUS 0x64
 #define PS2_CMD 0x64
@@ -54,6 +58,20 @@ static bool ps2_port_test(int port) {
     return inb(PS2_DATA) == 0x00;
 }
 
+void ps2_flush_buffers(void) {
+    while (inb(PS2_STATUS) & 0x01) {
+        uint8_t status = inb(PS2_STATUS);
+        uint8_t data = inb(PS2_DATA);
+        if (status & 0x20) { // from mouse
+            if (has_mouse)
+                mouse_handle_byte(data);
+        } else {
+            if (has_keyboard)
+                keyboard_handle_byte(data);
+        }
+    }
+}
+
 
 bool mouse_available(void) { return has_mouse; }
 
@@ -80,3 +98,4 @@ void hardware_init(void) {
     if (has_mouse)
         mouse_enable();
 }
+
