@@ -1,6 +1,7 @@
 // pmm.c - Simple physical memory manager (frame allocator)
 #include <stdint.h>
 #include <stddef.h>
+#include "pmm.h"
 
 #define FRAME_SIZE 4096        // 4 KiB
 #define TOTAL_MEMORY (16 * 1024 * 1024)  // 16 MiB
@@ -44,5 +45,6 @@ uint32_t alloc_frame() {
 // Free a frame at given physical address
 void free_frame(uint32_t addr) {
     uint32_t frame = addr / FRAME_SIZE;
-    clear_frame(frame);
+    if (frame < FRAME_COUNT && test_frame(frame))
+        clear_frame(frame);
 }

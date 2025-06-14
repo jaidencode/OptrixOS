@@ -33,6 +33,7 @@ c_files = [
     "vga.c",
     "graphics.c",
     "pmm.c",
+    "vmm.c",
     "idt.c",
     "hardware.c",
     "keyboard.c",

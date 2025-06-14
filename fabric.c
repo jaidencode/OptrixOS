@@ -10,6 +10,24 @@ static const unsigned char cursor_bitmap[8] = {
     0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFE
 };
 
+static uint8_t cursor_back[8][8];
+
+static void save_cursor_back(int x, int y) {
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            cursor_back[row][col] = graphics_get_pixel(x + col, y + row);
+        }
+    }
+}
+
+static void restore_cursor_back(int x, int y) {
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            graphics_put_pixel(x + col, y + row, cursor_back[row][col]);
+        }
+    }
+}
+
 static void draw_cursor(int x, int y, uint8_t color) {
     for (int row = 0; row < 8; ++row) {
         unsigned char bits = cursor_bitmap[row];
@@ -65,6 +83,7 @@ void fabric_ui(uint8_t color) {
     draw_terminal_window();
     int mouse_x = SCREEN_WIDTH / 2;
     int mouse_y = SCREEN_HEIGHT / 2;
+    save_cursor_back(mouse_x, mouse_y);
     draw_cursor(mouse_x, mouse_y, 15);
     int cur_col = 0;
     int cur_row = 0;
@@ -76,13 +95,14 @@ void fabric_ui(uint8_t color) {
         if (mouse_available() && mouse_read_packet(packet)) {
             int dx = (int8_t)packet[1];
             int dy = (int8_t)packet[2];
-            draw_cursor(mouse_x, mouse_y, 1);
+            restore_cursor_back(mouse_x, mouse_y);
             mouse_x += dx;
             mouse_y -= dy;
             if (mouse_x < 0) mouse_x = 0;
             if (mouse_y < 0) mouse_y = 0;
-            if (mouse_x >= SCREEN_WIDTH) mouse_x = SCREEN_WIDTH - 1;
-            if (mouse_y >= SCREEN_HEIGHT) mouse_y = SCREEN_HEIGHT - 1;
+            if (mouse_x >= SCREEN_WIDTH) mouse_x = SCREEN_WIDTH - 8;
+            if (mouse_y >= SCREEN_HEIGHT) mouse_y = SCREEN_HEIGHT - 8;
+            save_cursor_back(mouse_x, mouse_y);
             draw_cursor(mouse_x, mouse_y, 15);
         }
 
