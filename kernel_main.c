@@ -12,6 +12,7 @@ void vga_set_default_color(uint8_t color);
 void vga_move_cursor(int row, int col);
 uint16_t vga_get_cell(int row, int col);
 void vga_set_cell(int row, int col, uint16_t val);
+void vga_enable_cursor(void);
 
 // --- pmm.c prototypes ---
 void init_pmm(uint32_t kernel_end_addr);
@@ -185,6 +186,7 @@ static void boot_sequence(struct BootInfo* boot, uint8_t color) {
     int row = 2;
     vga_set_default_color(color);
     vga_clear(color);
+    vga_enable_cursor();
     vga_center_puts(row++, "=== OptrixOS Boot ===", color);
 
     char mem_msg[] = "BIOS Memory KB: ";
@@ -200,16 +202,14 @@ static void boot_sequence(struct BootInfo* boot, uint8_t color) {
     vga_center_puts(row++, "IDT ready", color);
     wait_2s();
 
-    vga_center_puts(row++, "Enabling keyboard...", color);
+    vga_center_puts(row++, "Detecting input devices...", color);
     wait_2s();
-    keyboard_enable();
-    vga_center_puts(row++, keyboard_available() ? "Keyboard detected" : "Keyboard missing", color);
+    hardware_init();
+    const char* kmsg = keyboard_available() ? "Keyboard detected" : "Keyboard missing";
+    const char* mmsg = mouse_available() ? "Mouse detected" : "Mouse missing";
+    vga_center_puts(row++, kmsg, color);
     wait_2s();
-
-    vga_center_puts(row++, "Enabling mouse...", color);
-    wait_2s();
-    mouse_enable();
-    vga_center_puts(row++, mouse_available() ? "Mouse detected" : "Mouse missing", color);
+    vga_center_puts(row++, mmsg, color);
     wait_2s();
 }
 

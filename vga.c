@@ -6,6 +6,12 @@ static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
+static inline uint8_t inb(uint16_t port) {
+    uint8_t val;
+    __asm__ volatile ("inb %1, %0" : "=a"(val) : "Nd"(port));
+    return val;
+}
+
 // --- VGA DEFINITIONS ---
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
@@ -35,6 +41,13 @@ static int cursor_row = 0, cursor_col = 0;
 static uint8_t default_color = (VGA_BLUE << 4) | VGA_WHITE;
 
 // --- CURSOR CONTROL ---
+void vga_enable_cursor(void) {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, (inb(0x3D5) & 0xC0));
+    outb(0x3D4, 0x0B);
+    outb(0x3D5, (inb(0x3D5) & 0xE0) | 15);
+}
+
 void vga_move_cursor(int row, int col) {
     uint16_t pos = row * VGA_WIDTH + col;
     outb(0x3D4, 0x0F);

@@ -43,6 +43,25 @@ void keyboard_enable(void) {
     has_keyboard = (ack == 0xFA);
 }
 
+static void ps2_flush_output(void) {
+    while (inb(PS2_STATUS) & 0x01)
+        (void)inb(PS2_DATA);
+}
+
+static bool ps2_controller_self_test(void) {
+    ps2_wait_input();
+    outb(PS2_CMD, 0xAA);
+    ps2_wait_output();
+    return inb(PS2_DATA) == 0x55;
+}
+
+static bool ps2_port_test(int port) {
+    ps2_wait_input();
+    outb(PS2_CMD, port == 1 ? 0xAB : 0xA9);
+    ps2_wait_output();
+    return inb(PS2_DATA) == 0x00;
+}
+
 uint8_t keyboard_read_scan(void) {
     if (inb(PS2_STATUS) & 0x01) {
         return inb(PS2_DATA);
@@ -102,6 +121,21 @@ bool mouse_read_packet(uint8_t packet[3]) {
 void hardware_init(void) {
     has_keyboard = false;
     has_mouse = false;
-    keyboard_enable();
-    mouse_enable();
+
+    /* Disable both PS/2 ports and flush any pending output */
+    ps2_wait_input();
+    outb(PS2_CMD, 0xAD); // disable first port
+    ps2_wait_input();
+    outb(PS2_CMD, 0xA7); // disable second port
+    ps2_flush_output();
+
+    ps2_controller_self_test();
+
+    has_keyboard = ps2_port_test(1);
+    has_mouse = ps2_port_test(2);
+
+    if (has_keyboard)
+        keyboard_enable();
+    if (has_mouse)
+        mouse_enable();
 }
