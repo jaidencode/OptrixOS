@@ -10,6 +10,8 @@ void vga_clear(uint8_t color);
 void vga_puts(const char* str, uint8_t color);
 void vga_set_default_color(uint8_t color);
 void vga_move_cursor(int row, int col);
+uint16_t vga_get_cell(int row, int col);
+void vga_set_cell(int row, int col, uint16_t val);
 
 // --- pmm.c prototypes ---
 void init_pmm(uint32_t kernel_end_addr);
@@ -103,6 +105,55 @@ void command_line_shell(uint8_t color) {
     }
 }
 
+// === Simple mouse & keyboard test UI ===
+void ui_mouse_terminal(uint8_t color) {
+    int mouse_row = VGA_HEIGHT / 2;
+    int mouse_col = VGA_WIDTH / 2;
+    uint16_t prev_cell = vga_get_cell(mouse_row, mouse_col);
+    uint16_t cursor_val = (color << 8) | 'X';
+    vga_set_cell(mouse_row, mouse_col, cursor_val);
+
+    int term_row = VGA_HEIGHT - 1;
+    int term_col = 0;
+    vga_move_cursor(term_row, term_col);
+    vga_puts("Press ESC to exit > ", color);
+    term_col = kstrlen("Press ESC to exit > ");
+    char line[80];
+    int linepos = 0;
+
+    while (1) {
+        uint8_t packet[3];
+        if (mouse_available() && mouse_read_packet(packet)) {
+            int dx = (int8_t)packet[1];
+            int dy = (int8_t)packet[2];
+            vga_set_cell(mouse_row, mouse_col, prev_cell);
+            mouse_col += dx / 2;
+            mouse_row -= dy / 2;
+            if (mouse_col < 0) mouse_col = 0;
+            if (mouse_row < 0) mouse_row = 0;
+            if (mouse_col >= VGA_WIDTH) mouse_col = VGA_WIDTH - 1;
+            if (mouse_row >= VGA_HEIGHT - 1) mouse_row = VGA_HEIGHT - 2;
+            prev_cell = vga_get_cell(mouse_row, mouse_col);
+            vga_set_cell(mouse_row, mouse_col, cursor_val);
+        }
+
+        uint8_t sc = keyboard_read_scan();
+        if (sc && sc < 0x80) {
+            char ch = scancode_ascii[sc];
+            if (ch == 27) { // ESC
+                vga_set_cell(mouse_row, mouse_col, prev_cell);
+                break;
+            }
+            if (ch && linepos < (int)(sizeof(line)-1)) {
+                line[linepos++] = ch;
+                char s[2] = {ch, 0};
+                vga_puts(s, color);
+                term_col++;
+            }
+        }
+    }
+}
+
 // === Kernel main ===
 void kmain() {
     uint8_t blue_white = (1 << 4) | 0xF;
@@ -175,6 +226,6 @@ void kmain() {
 
     for (volatile int i = 0; i < 50000000; ++i);
 
-    // === SWITCH TO COMMAND LINE MODE ===
-    command_line_shell(blue_white);
+    // === SIMPLE GRAPHICAL TERMINAL WITH MOUSE ===
+    ui_mouse_terminal(blue_white);
 }
