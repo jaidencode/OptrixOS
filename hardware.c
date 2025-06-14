@@ -1,20 +1,20 @@
 #include "hardware.h"
 
-#define PS2_DATA    0x60
-#define PS2_STATUS  0x64
-#define PS2_CMD     0x64
+#define PS2_DATA 0x60
+#define PS2_STATUS 0x64
+#define PS2_CMD 0x64
 
 static bool has_keyboard = true;
 static bool has_mouse = false;
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t data;
-    __asm__ volatile ("inb %1, %0" : "=a"(data) : "Nd"(port));
+    __asm__ volatile("inb %1, %0" : "=a"(data) : "Nd"(port));
     return data;
 }
 
 static inline void outb(uint16_t port, uint8_t data) {
-    __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
+    __asm__ volatile("outb %0, %1" : : "a"(data), "Nd"(port));
 }
 
 static void ps2_wait_input(void) {
@@ -33,22 +33,23 @@ bool keyboard_available(void) { return has_keyboard; }
 
 void keyboard_enable(void) {
     ps2_wait_input();
-    e3wlqv-codex/fix-mouse-and-keyboard-functionality
     outb(PS2_CMD, 0xAE); // enable first PS/2 port
     ps2_wait_input();
-=======
-    main
     outb(PS2_DATA, 0xF4); // enable scanning
     ps2_wait_output();
     uint8_t ack = inb(PS2_DATA);
     has_keyboard = (ack == 0xFA);
 }
-
-uint8_t keyboard_read_scan(void) {
-    if (inb(PS2_STATUS) & 0x01) {
-        return inb(PS2_DATA);
-    }
-    return 0;
+        for (int i = 0; i < 3; ++i)
+            packet[i] = bytes[i];
+// Detect basic PS/2 devices. Call only after the IDT is installed to
+// avoid unexpected interrupts resetting the CPU.
+void hardware_init(void) {
+    has_keyboard = false;
+    has_mouse = false;
+    keyboard_enable();
+    mouse_enable();
+}
 }
 
 bool mouse_available(void) { return has_mouse; }
