@@ -23,6 +23,9 @@ start:
     ; Get conventional memory size (KB) via BIOS
     int 0x12
     mov [BOOTINFO_ADDR], ax
+    ; Store default screen resolution (will be patched by kernel if needed)
+    mov dword [BOOTINFO_ADDR + 4], 1920
+    mov dword [BOOTINFO_ADDR + 8], 1080
 
     ; Load 8 sectors of kernel from LBA 1 (MBR=sector 0, kernel=sector 1+)
     mov ah, 0x02
