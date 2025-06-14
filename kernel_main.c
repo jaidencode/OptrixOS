@@ -43,6 +43,25 @@ void kprint_hex(uint32_t n, uint8_t color) {
     vga_puts(buf, color);
 }
 
+void kprint_dec(uint32_t n, uint8_t color) {
+    char buf[16];
+    int i = 0;
+    if (n == 0) {
+        buf[i++] = '0';
+    } else {
+        char tmp[16];
+        int j = 0;
+        while (n && j < 15) {
+            tmp[j++] = '0' + (n % 10);
+            n /= 10;
+        }
+        while (j > 0)
+            buf[i++] = tmp[--j];
+    }
+    buf[i] = 0;
+    vga_puts(buf, color);
+}
+
 // === Simple keyboard scancode -> ASCII translation table (US QWERTY, non-shifted) ===
 static const char scancode_ascii[128] = {
     0, 27, '1','2','3','4','5','6','7','8','9','0','-','=','\b',   // 0x00 - 0x0F
@@ -154,79 +173,52 @@ void ui_mouse_terminal(uint8_t color) {
     }
 }
 
-// === Kernel main ===
-void kmain() {
-    uint8_t blue_white = (1 << 4) | 0xF;
-    uint8_t red_yellow = (4 << 4) | 0xE;
-    uint8_t green_black = (2 << 4) | 0xA;
+struct BootInfo {
+    uint32_t mem_kb;
+};
 
-    vga_set_default_color(blue_white);
-    vga_clear(blue_white);
+static void wait_2s(void) {
+    for (volatile uint32_t i = 0; i < 50000000; ++i);
+}
 
-    // --- INITIALIZE IDT BEFORE ENABLING DEVICES ---
-    idt_init();
-
-    // --- HARDWARE INIT ---
-    hardware_init();
-
+static void boot_sequence(struct BootInfo* boot, uint8_t color) {
     int row = 2;
-    vga_center_puts(row++, "=== Hardware Device Detection ===", blue_white);
+    vga_set_default_color(color);
+    vga_clear(color);
+    vga_center_puts(row++, "=== OptrixOS Boot ===", color);
 
-    if (keyboard_available()) {
-        vga_center_puts(row++, "Keyboard: Detected", blue_white);
-    } else {
-        vga_center_puts(row++, "Keyboard: NOT Detected", red_yellow);
-    }
+    char mem_msg[] = "BIOS Memory KB: ";
+    vga_center_puts(row, mem_msg, color);
+    int col = (VGA_WIDTH - (kstrlen(mem_msg) + 10)) / 2 + kstrlen(mem_msg);
+    vga_move_cursor(row++, col);
+    kprint_dec(boot ? boot->mem_kb : 0, color);
+    wait_2s();
 
-    if (mouse_available()) {
-        vga_center_puts(row++, "Mouse: Detected", blue_white);
-    } else {
-        vga_center_puts(row++, "Mouse: NOT Detected", red_yellow);
-    }
+    vga_center_puts(row++, "Initializing IDT...", color);
+    wait_2s();
+    idt_init();
+    vga_center_puts(row++, "IDT ready", color);
+    wait_2s();
 
-    // --- PHYSICAL MEMORY MANAGER TEST ---
-    row++;
-    vga_center_puts(row++, "Physical Memory Manager Test", blue_white);
+    vga_center_puts(row++, "Enabling keyboard...", color);
+    wait_2s();
+    keyboard_enable();
+    vga_center_puts(row++, keyboard_available() ? "Keyboard detected" : "Keyboard missing", color);
+    wait_2s();
 
-    init_pmm(0x100000);
+    vga_center_puts(row++, "Enabling mouse...", color);
+    wait_2s();
+    mouse_enable();
+    vga_center_puts(row++, mouse_available() ? "Mouse detected" : "Mouse missing", color);
+    wait_2s();
+}
 
-    vga_center_puts(row++, "Allocating 5 frames...", blue_white);
-    uint32_t frames[5];
-    for (int i = 0; i < 5; ++i) {
-        frames[i] = alloc_frame();
-        char msg[32] = "Frame allocated at ";
-        int display_row = row + i;
-        vga_center_puts(display_row, msg, blue_white);
-        int hex_col = (VGA_WIDTH - (kstrlen(msg) + 10)) / 2 + kstrlen(msg);
-        vga_move_cursor(display_row, hex_col);
-        kprint_hex(frames[i], red_yellow);
-    }
-    row += 5;
+// === Kernel main ===
+void kmain(struct BootInfo* boot) {
+    uint8_t blue_white = (1 << 4) | 0xF;
 
-    vga_center_puts(row++, "Freeing frame #3...", blue_white);
-    free_frame(frames[2]);
+    boot_sequence(boot, blue_white);
 
-    vga_center_puts(row++, "Allocating 1 more frame...", blue_white);
-    uint32_t reused = alloc_frame();
-    char msg2[32] = "Frame allocated at ";
-    vga_center_puts(row, msg2, blue_white);
-    int hex_col2 = (VGA_WIDTH - (kstrlen(msg2) + 10)) / 2 + kstrlen(msg2);
-    vga_move_cursor(row, hex_col2);
-    kprint_hex(reused, red_yellow);
-    row++;
-
-    if (reused == frames[2]) {
-        vga_center_puts(row++, "PMM Test: PASS (frame reused)", green_black);
-    } else {
-        vga_center_puts(row++, "PMM Test: FAIL (no reuse)", red_yellow);
-    }
-
-    row++;
-    vga_center_puts(row++, "IDT/Exception Test (Divide by Zero)", blue_white);
-    vga_center_puts(row++, "Triggering exception in 2 seconds...", red_yellow);
-
-    for (volatile int i = 0; i < 50000000; ++i);
-
-    // === SIMPLE GRAPHICAL TERMINAL WITH MOUSE ===
+    // Launch mouse/keyboard test UI
     ui_mouse_terminal(blue_white);
 }
