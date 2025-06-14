@@ -2,6 +2,7 @@
 BITS 32
 
 global start
+global kernel_end
 extern kmain
 
 section .text
