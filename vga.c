@@ -109,3 +109,12 @@ void vga_write_str(int row, int col, const char* str, uint8_t color) {
 void vga_set_default_color(uint8_t color) {
     default_color = color;
 }
+
+// --- DIRECT CELL ACCESS ---
+uint16_t vga_get_cell(int row, int col) {
+    return vga_buffer[row * VGA_WIDTH + col];
+}
+
+void vga_set_cell(int row, int col, uint16_t val) {
+    vga_buffer[row * VGA_WIDTH + col] = val;
+}
