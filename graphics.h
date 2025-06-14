@@ -2,8 +2,8 @@
 #define GRAPHICS_H
 #include <stdint.h>
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 200
+#define SCREEN_WIDTH 1920
+#define SCREEN_HEIGHT 1080
 
 void graphics_init(void);
 void graphics_clear(uint8_t color);
