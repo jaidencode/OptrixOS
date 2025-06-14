@@ -4,6 +4,21 @@
 #include "fabric.h"
 #include "graphics.h"
 #include "hardware.h"
+#include "font8x8.h"
+
+static const unsigned char cursor_bitmap[8] = {
+    0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFE
+};
+
+static void draw_cursor(int x, int y, uint8_t color) {
+    for (int row = 0; row < 8; ++row) {
+        unsigned char bits = cursor_bitmap[row];
+        for (int col = 0; col < 8; ++col) {
+            if (bits & (1 << (7 - col)))
+                graphics_put_pixel(x + col, y + row, color);
+        }
+    }
+}
 
 static const char scancode_ascii[128] = {
     0, 27,'1','2','3','4','5','6','7','8','9','0','-','=','\b',
@@ -19,16 +34,40 @@ static const char scancode_ascii[128] = {
 
 // Draw a simple bordered window filling most of the screen
 static void draw_window(uint8_t color) {
-    graphics_draw_rect(20, 20, SCREEN_WIDTH - 40, SCREEN_HEIGHT - 40, color);
+    graphics_draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color);
+}
+
+static const int term_x = 30;
+static const int term_y = 40;
+static const int term_w = SCREEN_WIDTH - 60;
+static const int term_h = SCREEN_HEIGHT - 80;
+
+static void draw_terminal_window(void) {
+    graphics_draw_rect(term_x, term_y, term_w, term_h, 1);
+    for (int i = 0; i < term_w; ++i) {
+        graphics_put_pixel(term_x + i, term_y, 15);
+        graphics_put_pixel(term_x + i, term_y + term_h - 1, 15);
+    }
+    for (int j = 0; j < term_h; ++j) {
+        graphics_put_pixel(term_x, term_y + j, 15);
+        graphics_put_pixel(term_x + term_w - 1, term_y + j, 15);
+    }
+
+    graphics_draw_rect(term_x + 1, term_y + 1, term_w - 2, 10, 8);
+    graphics_draw_rect(term_x + 4, term_y + 3, 4, 4, 12);
+    graphics_draw_rect(term_x + 12, term_y + 3, 4, 4, 14);
+    graphics_draw_rect(term_x + 20, term_y + 3, 4, 4, 10);
 }
 
 void fabric_ui(uint8_t color) {
     graphics_clear(0);
     draw_window(color);
-
+    draw_terminal_window();
     int mouse_x = SCREEN_WIDTH / 2;
     int mouse_y = SCREEN_HEIGHT / 2;
-    graphics_put_pixel(mouse_x, mouse_y, 15);
+    draw_cursor(mouse_x, mouse_y, 15);
+    int cur_col = 0;
+    int cur_row = 0;
 
     while (1) {
         ps2_flush_buffers();
@@ -37,14 +76,14 @@ void fabric_ui(uint8_t color) {
         if (mouse_available() && mouse_read_packet(packet)) {
             int dx = (int8_t)packet[1];
             int dy = (int8_t)packet[2];
-            graphics_put_pixel(mouse_x, mouse_y, 0);
+            draw_cursor(mouse_x, mouse_y, 1);
             mouse_x += dx;
             mouse_y -= dy;
             if (mouse_x < 0) mouse_x = 0;
             if (mouse_y < 0) mouse_y = 0;
             if (mouse_x >= SCREEN_WIDTH) mouse_x = SCREEN_WIDTH - 1;
             if (mouse_y >= SCREEN_HEIGHT) mouse_y = SCREEN_HEIGHT - 1;
-            graphics_put_pixel(mouse_x, mouse_y, 15);
+            draw_cursor(mouse_x, mouse_y, 15);
         }
 
         uint8_t sc = keyboard_read_scan();
@@ -52,6 +91,26 @@ void fabric_ui(uint8_t color) {
             char ch = scancode_ascii[sc];
             if (ch == 27)
                 break;
+            if (ch == '\b') {
+                if (cur_col > 0) cur_col--;
+            } else if (ch == '\n') {
+                cur_col = 0;
+                cur_row++;
+            } else if (ch >= ' ' && ch <= '~') {
+                graphics_draw_char(term_x + 4 + cur_col * 8,
+                                   term_y + 12 + cur_row * 8,
+                                   ch, 15);
+                cur_col++;
+                if (cur_col * 8 > term_w - 8) {
+                    cur_col = 0;
+                    cur_row++;
+                }
+            }
+            if (cur_row * 8 > term_h - 16) {
+                cur_row = 0;
+                graphics_draw_rect(term_x + 1, term_y + 11,
+                                  term_w - 2, term_h - 12, 1);
+            }
         }
     }
 }
