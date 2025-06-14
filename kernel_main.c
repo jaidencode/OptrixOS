@@ -163,6 +163,9 @@ void kmain() {
     vga_set_default_color(blue_white);
     vga_clear(blue_white);
 
+    // --- INITIALIZE IDT BEFORE ENABLING DEVICES ---
+    idt_init();
+
     // --- HARDWARE INIT ---
     hardware_init();
 
@@ -221,8 +224,6 @@ void kmain() {
     row++;
     vga_center_puts(row++, "IDT/Exception Test (Divide by Zero)", blue_white);
     vga_center_puts(row++, "Triggering exception in 2 seconds...", red_yellow);
-
-    idt_init();
 
     for (volatile int i = 0; i < 50000000; ++i);
 

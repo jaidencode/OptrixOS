@@ -84,6 +84,8 @@ bool mouse_read_packet(uint8_t packet[3]) {
     return false;
 }
 
+// Detect basic PS/2 devices. Call only after the IDT is installed to
+// avoid unexpected interrupts resetting the CPU.
 void hardware_init(void) {
     has_keyboard = true;
     mouse_enable();

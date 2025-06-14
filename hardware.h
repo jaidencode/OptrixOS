@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Initialize keyboard/mouse. IDT should be ready before calling.
 void hardware_init(void);
 
 // Keyboard
