@@ -31,6 +31,16 @@ static void ps2_wait_output(void) {
 
 bool keyboard_available(void) { return has_keyboard; }
 
+void keyboard_enable(void) {
+    ps2_wait_input();
+    outb(PS2_CMD, 0xAE); // enable first PS/2 port
+    ps2_wait_input();
+    outb(PS2_DATA, 0xF4); // enable scanning
+    ps2_wait_output();
+    uint8_t ack = inb(PS2_DATA);
+    has_keyboard = (ack == 0xFA);
+}
+
 uint8_t keyboard_read_scan(void) {
     if (inb(PS2_STATUS) & 0x01) {
         return inb(PS2_DATA);
@@ -87,6 +97,8 @@ bool mouse_read_packet(uint8_t packet[3]) {
 // Detect basic PS/2 devices. Call only after the IDT is installed to
 // avoid unexpected interrupts resetting the CPU.
 void hardware_init(void) {
-    has_keyboard = true;
+    has_keyboard = false;
+    has_mouse = false;
+    keyboard_enable();
     mouse_enable();
 }
