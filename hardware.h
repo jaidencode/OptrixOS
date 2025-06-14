@@ -8,9 +8,15 @@
 void hardware_init(void);
 
 // Keyboard
+uhu5r1-codex/fix-mouse-and-keyboard-functionality
 bool keyboard_available(void);
 void keyboard_enable(void);
 uint8_t keyboard_read_scan(void);
+=======
+bool keyboard_available(void);
+void keyboard_enable(void);
+uint8_t keyboard_read_scan(void);
+main
 
 // Mouse
 bool mouse_available(void);
