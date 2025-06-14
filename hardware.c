@@ -1,38 +1,44 @@
 #include "hardware.h"
 
-#define PS2_DATA    0x60
-#define PS2_STATUS  0x64
-#define PS2_CMD     0x64
+#define PS2_DATA 0x60
+#define PS2_STATUS 0x64
+#define PS2_CMD 0x64
 
 static bool has_keyboard = true;
 static bool has_mouse = false;
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t data;
-    __asm__ volatile ("inb %1, %0" : "=a"(data) : "Nd"(port));
+    __asm__ volatile("inb %1, %0" : "=a"(data) : "Nd"(port));
     return data;
 }
 
 static inline void outb(uint16_t port, uint8_t data) {
-    __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
+    __asm__ volatile("outb %0, %1" : : "a"(data), "Nd"(port));
 }
 
 static void ps2_wait_input(void) {
-    for (int i = 0; i < 100000; ++i)
+    for (int i = 0; i < 100000; ++i) {
         if (!(inb(PS2_STATUS) & 0x02))
             return;
+    }
 }
 
 static void ps2_wait_output(void) {
-    for (int i = 0; i < 100000; ++i)
+    for (int i = 0; i < 100000; ++i) {
         if (inb(PS2_STATUS) & 0x01)
             return;
+    }
 }
 
 bool keyboard_available(void) { return has_keyboard; }
 
 void keyboard_enable(void) {
     ps2_wait_input();
+    uhu5r1-codex/fix-mouse-and-keyboard-functionality
+    outb(PS2_CMD, 0xAE); // enable first PS/2 port
+    ps2_wait_input();
+=======
     e3wlqv-codex/fix-mouse-and-keyboard-functionality
     outb(PS2_CMD, 0xAE); // enable first PS/2 port
     ps2_wait_input();
@@ -90,7 +96,8 @@ bool mouse_read_packet(uint8_t packet[3]) {
         return false;
     bytes[phase++] = data;
     if (phase == 3) {
-        for (int i = 0; i < 3; ++i) packet[i] = bytes[i];
+        for (int i = 0; i < 3; ++i)
+            packet[i] = bytes[i];
         phase = 0;
         return true;
     }
