@@ -11,21 +11,10 @@ start:
     ; Save BIOS boot drive number
     mov [BOOT_DRIVE], dl
 
-    ; Attempt to set graphics mode 1920x1080x32 using VBE
+    ; Set graphics mode 1920x1080x32 using VBE
     mov ax, 0x4F02
     mov bx, 0x11C | 0x4000      ; VBE mode 0x11C + linear framebuffer
     int 0x10
-    cmp ax, 0x004F
-    je .mode_ok
-    ; Fallback to 1024x768x32 if the preferred mode is unsupported
-    mov ax, 0x4F02
-    mov bx, 0x118 | 0x4000
-    int 0x10
-    mov word [SELECTED_MODE], 0x118
-    jmp .mode_set
-.mode_ok:
-    mov word [SELECTED_MODE], 0x11C
-.mode_set:
 
     ; Print banner
     mov si, banner
@@ -40,7 +29,7 @@ start:
     mov es, ax
     mov di, MODE_INFO_OFF
     mov ax, 0x4F01
-    mov cx, [SELECTED_MODE]
+    mov cx, 0x11C
     int 0x10
 
     mov ax, [es:di + 18h]   ; XResolution
@@ -100,7 +89,6 @@ banner db 'OptrixOS Bootloader',13,10,0
 err    db 'DISK ERR!',0
 
 BOOT_DRIVE: db 0
-SELECTED_MODE: dw 0
 BOOTINFO_ADDR equ 0x9000
 MODE_INFO equ 0x9200
 MODE_INFO_SEG equ MODE_INFO >> 4
