@@ -37,7 +37,8 @@ c_files = [
     "hardware.c",
     "keyboard.c",
     "mouse.c",
-    "fabric.c"
+    "fabric.c",
+    "font8x8.c"
 ]
 
 tmp_files = []

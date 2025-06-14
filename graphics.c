@@ -24,3 +24,25 @@ void graphics_draw_rect(int x, int y, int w, int h, uint8_t color) {
         }
     }
 }
+
+#include "font8x8.h"
+
+void graphics_draw_char(int x, int y, char c, uint8_t color) {
+    const unsigned char *glyph = font8x8_basic[(unsigned char)c];
+    for (int row = 0; row < 8; ++row) {
+        unsigned char bits = glyph[row];
+        for (int col = 0; col < 8; ++col) {
+            if (bits & (1 << col)) {
+                graphics_put_pixel(x + col, y + row, color);
+            }
+        }
+    }
+}
+
+void graphics_draw_string(int x, int y, const char *str, uint8_t color) {
+    int cx = x;
+    while (*str) {
+        graphics_draw_char(cx, y, *str++, color);
+        cx += 8;
+    }
+}
