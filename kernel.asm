@@ -12,6 +12,8 @@ start:
     call kmain
 
 .hang:
+    cli
+    hlt
     jmp .hang
 
 section .bss
