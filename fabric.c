@@ -1,5 +1,6 @@
 #include <stdint.h>
-#include "hardware.h"
+#include "keyboard.h"
+#include "mouse.h"
 #include "fabric.h"
 #include "vga.h"
 

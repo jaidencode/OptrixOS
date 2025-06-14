@@ -34,6 +34,8 @@ c_files = [
     "pmm.c",
     "idt.c",
     "hardware.c",
+    "keyboard.c",
+    "mouse.c",
     "fabric.c"
 ]
 

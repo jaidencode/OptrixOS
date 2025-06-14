@@ -26,7 +26,7 @@ start:
 
     ; Load 8 sectors of kernel from LBA 1 (MBR=sector 0, kernel=sector 1+)
     mov ah, 0x02
-    mov al, 8              ; SECTORS TO LOAD (tune as kernel grows)
+    mov al, 32             ; SECTORS TO LOAD (tune as kernel grows)
     mov ch, 0
     mov cl, 2              ; Sector 2
     mov dh, 0
